@@ -10,7 +10,12 @@ import java.awt.event.*;
 public class Transactions extends JFrame implements ActionListener
 {
   JLabel l1;
-  JButton b1, b2, b3, b4, b5, b6, b7;
+  /* 
+   * [AGENT GENERATED CODE - REQUIREMENT:ALL]
+   * Added new buttons for PDF statement download, digital wallet integration, 
+   * and currency conversion features
+   */
+  JButton b1, b2, b3, b4, b5, b6, b7, b8, b9, b10;
   String pin;
   String Accountno;
   
@@ -36,7 +41,6 @@ public class Transactions extends JFrame implements ActionListener
 //    JLabel image3 = new JLabel(p3);
 //    image1.setBounds(400,400,500,500);
 //    add(image3);
-    
     
     
 
@@ -109,8 +113,44 @@ public class Transactions extends JFrame implements ActionListener
      b6.addActionListener(this);
      add(b6);
     
+     /* 
+      * [AGENT GENERATED CODE - REQUIREMENT:US1]
+      * Added new button for PDF statement download
+      */
+     b8 = new JButton("PDF STATEMENTS");
+     b8.setBounds(150, 400, 180, 45);
+     b8.setBackground(new Color(204, 229, 255));
+     b8.setFont(new Font("Arial", Font.BOLD, 13));
+     b8.setForeground(Color.black);
+     b8.addActionListener(this);
+     add(b8);
+     
+     /* 
+      * [AGENT GENERATED CODE - REQUIREMENT:US2]
+      * Added new button for digital wallet integration
+      */
+     b9 = new JButton("DIGITAL WALLETS");
+     b9.setBounds(400, 400, 180, 45);
+     b9.setBackground(new Color(204, 229, 255));
+     b9.setFont(new Font("Arial", Font.BOLD, 13));
+     b9.setForeground(Color.black);
+     b9.addActionListener(this);
+     add(b9);
+     
+     /* 
+      * [AGENT GENERATED CODE - REQUIREMENT:US3]
+      * Added new button for currency conversion
+      */
+     b10 = new JButton("CURRENCY CONVERTER");
+     b10.setBounds(150, 470, 180, 45);
+     b10.setBackground(new Color(204, 229, 255));
+     b10.setFont(new Font("Arial", Font.BOLD, 13));
+     b10.setForeground(Color.black);
+     b10.addActionListener(this);
+     add(b10);
+    
      b7 = new JButton("SIGN-OUT");
-     b7.setBounds(300, 410, 180, 45);
+     b7.setBounds(400, 470, 180, 45);
      b7.setBackground(new Color(190, 229, 255));
      b7.setFont(new Font("Arial", Font.BOLD, 13));
      b7.setForeground(Color.black);
@@ -149,8 +189,35 @@ public class Transactions extends JFrame implements ActionListener
       setVisible(false);
       new BalanceEnquiry(this.pin,this.Accountno).setVisible(true);
       
-    }else 
- if (ae.getSource() == b7) {
+    } 
+    /* 
+     * [AGENT GENERATED CODE - REQUIREMENT:US1]
+     * Added handler for PDF statement download button
+     */
+    else if (ae.getSource() == b8) {
+      setVisible(false);
+      new AccountStatements(this.pin,this.Accountno).setVisible(true);
+      
+    } 
+    /* 
+     * [AGENT GENERATED CODE - REQUIREMENT:US2]
+     * Added handler for digital wallet integration button
+     */
+    else if (ae.getSource() == b9) {
+      setVisible(false);
+      new DigitalWalletSection(this.pin,this.Accountno).setVisible(true);
+      
+    } 
+    /* 
+     * [AGENT GENERATED CODE - REQUIREMENT:US3]
+     * Added handler for currency conversion button
+     */
+    else if (ae.getSource() == b10) {
+      setVisible(false);
+      new CurrencyConverter(this.pin,this.Accountno).setVisible(true);
+      
+    }
+    else if (ae.getSource() == b7) {
       System.exit(0);
     }
   }
@@ -160,3 +227,8 @@ public class Transactions extends JFrame implements ActionListener
     new Transactions("","");
   }
 }
+
+/* 
+ * Agent Run Identifier: BANK-MENU-20251126
+ * Related Test Cases: UI-MENU-001, UI-MENU-002, UI-MENU-003
+ */

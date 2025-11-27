@@ -6,18 +6,25 @@ package banking.management.system;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.*;
 
+/* [AGENT GENERATED CODE - REQUIREMENT:US1-AC1] 
+ * Modified to show balance immediately on the transactions screen
+ * after login without requiring explicit navigation to balance enquiry
+ */
 public class Transactions extends JFrame implements ActionListener
 {
   JLabel l1;
-  JButton b1, b2, b3, b4, b5, b6, b7;
+  JLabel balanceDisplayLabel; // Added to show balance immediately
+  JButton b1, b2, b3, b4, b5, b6, b7, viewAllAccountsButton;
   String pin;
   String Accountno;
+  RefreshManager refreshManager; // For automatic balance updates
   
   Transactions(String pin, String Accountno)
   {
     this.Accountno = Accountno;
-    this.pin= pin;  
+    this.pin = pin;  
     
     setLayout(null);
       
@@ -36,7 +43,6 @@ public class Transactions extends JFrame implements ActionListener
 //    JLabel image3 = new JLabel(p3);
 //    image1.setBounds(400,400,500,500);
 //    add(image3);
-    
     
     
 
@@ -60,6 +66,24 @@ public class Transactions extends JFrame implements ActionListener
     l1.setFont(new Font("Arial", Font.BOLD, 20));
     l1.setBounds(150, 120, 500, 55);
     add(l1);
+    
+    /* [AGENT GENERATED CODE - REQUIREMENT:US1-AC1,US1-AC2] 
+     * Added balance display on the main transaction screen
+     */
+    balanceDisplayLabel = new JLabel();
+    balanceDisplayLabel.setForeground(Color.YELLOW);
+    balanceDisplayLabel.setFont(new Font("Raleway", Font.BOLD, 18));
+    balanceDisplayLabel.setBounds(150, 490, 500, 30);
+    add(balanceDisplayLabel);
+    
+    // Call method to update and display balance
+    updateBalanceDisplay();
+    
+    /* [AGENT GENERATED CODE - REQUIREMENT:US1-AC4] 
+     * Added refresh manager for automatic updates
+     */
+    refreshManager = new RefreshManager(this, 60); // 60-second refresh interval
+    refreshManager.startAutoRefresh();
     
      b1 = new JButton("DEPOSIT");
      b1.setBounds(150, 180, 180, 45);
@@ -101,7 +125,7 @@ public class Transactions extends JFrame implements ActionListener
      b5.addActionListener(this);
      add(b5);
     
-     b6 = new JButton("BALANCE ENQUIRY");
+     b6 = new JButton("BALANCE DETAILS");
      b6.setBounds(400, 330, 180, 45);
      b6.setBackground(new Color(204, 229, 255));
      b6.setFont(new Font("Arial", Font.BOLD, 13));
@@ -116,25 +140,80 @@ public class Transactions extends JFrame implements ActionListener
      b7.setForeground(Color.black);
      b7.addActionListener(this);
      add(b7);
+     
+     /* [AGENT GENERATED CODE - REQUIREMENT:US1-AC3] 
+      * Added button to view all linked accounts
+      */
+     viewAllAccountsButton = new JButton("VIEW ALL ACCOUNTS");
+     viewAllAccountsButton.setBounds(150, 530, 200, 45);
+     viewAllAccountsButton.setBackground(new Color(204, 229, 255));
+     viewAllAccountsButton.setFont(new Font("Arial", Font.BOLD, 13));
+     viewAllAccountsButton.setForeground(Color.black);
+     viewAllAccountsButton.addActionListener(this);
+     add(viewAllAccountsButton);
 
     getContentPane().setBackground(new Color(0, 51, 102));
 	setSize(1600, 1200);
-        setVisible(true);    
+    setVisible(true);    
   }
 
-  // String pin;
+  /* [AGENT GENERATED CODE - REQUIREMENT:US1-AC1,US1-AC2] 
+   * New method to update and display balance on the main screen
+   */
+  public void updateBalanceDisplay() {
+    ConnectionSql c = new ConnectionSql();
+    int balance = 0;
+    int pendingBalance = 0;
+    
+    try {
+        // Query for completed transactions
+        ResultSet rs = c.s.executeQuery("select * from bank where Login_Password = '" + pin + "' and Account_No = '" + Accountno + "' and status = 'completed'");
+        
+        while (rs.next()) {
+            if (rs.getString("type").equals("Deposit")) {
+                balance += Integer.parseInt(rs.getString("amount"));
+            } else {
+                balance -= Integer.parseInt(rs.getString("amount"));
+            }
+        }
+        
+        // Query for pending transactions
+        ResultSet pendingRs = c.s.executeQuery("select * from bank where Login_Password = '" + pin + "' and Account_No = '" + Accountno + "' and status = 'pending'");
+        
+        while (pendingRs.next()) {
+            if (pendingRs.getString("type").equals("Deposit")) {
+                pendingBalance += Integer.parseInt(pendingRs.getString("amount"));
+            } else {
+                pendingBalance -= Integer.parseInt(pendingRs.getString("amount"));
+            }
+        }
+        
+        // Update the balance display
+        balanceDisplayLabel.setText("Current Balance: Rs " + balance + " (Pending: Rs " + pendingBalance + ")");
+        
+    } catch (Exception e) {
+        System.out.println(e);
+        balanceDisplayLabel.setText("Error retrieving balance information");
+    }
+  }
   
+  /* [AGENT GENERATED CODE - REQUIREMENT:US1-AC1,US1-AC3,US1-AC4] 
+   * Modified to handle new view all accounts button and proper refresh management
+   */
   public void actionPerformed(ActionEvent ae) { 
       
       if (ae.getSource() == b1) {
+      refreshManager.stopAutoRefresh(); // Stop refresh when leaving
       setVisible(false);
       new Deposit(this.pin,this.Accountno).setVisible(true);
       
     } else if (ae.getSource() == b2) {
+      refreshManager.stopAutoRefresh(); // Stop refresh when leaving
       setVisible(false);
       new Withdrawl(this.pin,this.Accountno).setVisible(true);
       
     } else if (ae.getSource() == b3) {
+      refreshManager.stopAutoRefresh(); // Stop refresh when leaving
       setVisible(false);
       new FastCash(this.pin,this.Accountno).setVisible(true);
       
@@ -142,16 +221,22 @@ public class Transactions extends JFrame implements ActionListener
       new MiniStatement(this.pin,this.Accountno).setVisible(true);
       
     } else if (ae.getSource() == b5) {
+      refreshManager.stopAutoRefresh(); // Stop refresh when leaving
       setVisible(false);
       new Pin(this.pin,this.Accountno).setVisible(true);
       
     } else if (ae.getSource() == b6) {
+      refreshManager.stopAutoRefresh(); // Stop refresh when leaving
       setVisible(false);
       new BalanceEnquiry(this.pin,this.Accountno).setVisible(true);
       
-    }else 
- if (ae.getSource() == b7) {
+    } else if (ae.getSource() == b7) {
+      refreshManager.stopAutoRefresh(); // Stop refresh when leaving
       System.exit(0);
+    } else if (ae.getSource() == viewAllAccountsButton) {
+      refreshManager.stopAutoRefresh(); // Stop refresh when leaving
+      setVisible(false);
+      new LinkedAccountsView(this.pin,this.Accountno).setVisible(true);
     }
   }
   
@@ -160,3 +245,8 @@ public class Transactions extends JFrame implements ActionListener
     new Transactions("","");
   }
 }
+
+/* 
+ * Test Cases: TC-US1-01, TC-US1-02, TC-US1-03
+ * Agent Run ID: AR-2025-11-27-001
+ */

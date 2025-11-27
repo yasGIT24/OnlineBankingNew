@@ -4,12 +4,20 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.awt.event.*;
+import java.sql.*;
+import java.util.regex.Pattern;
 
 /**
  *
  * @author Adarsh Kunal
  */
 
+/* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+ * Modified Signup1.java to implement:
+ * 1. SQL injection remediation with parameterized queries
+ * 2. Enhanced input validation
+ * 3. Integration with 2FA signup flow
+ */
 public class Signup1 extends JFrame implements ActionListener{
     
     long fnum;
@@ -19,10 +27,16 @@ public class Signup1 extends JFrame implements ActionListener{
     JButton npage;
     boolean True;
     
+    /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+     * Added validation labels and indicators
+     */
+    private JLabel validationStatusLabel;
+    private HashMap<String, Boolean> validationStatus;
+    private JLabel securityInfoLabel;
+    
     Signup1(){
         
         setLayout(null);
-       // setUndecorated(true);
         
         Random ran = new Random();
         fnum = (Math.abs(ran.nextLong()%900L + 100000L));
@@ -37,12 +51,26 @@ public class Signup1 extends JFrame implements ActionListener{
         pdetails.setBounds(300, 90, 600, 30);
         add(pdetails);
         
+        /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+         * Added security info label to inform users about multi-step secure registration
+         */
+        securityInfoLabel = new JLabel("<html>This is step 1 of 3 in our secure registration process.<br>" +
+            "After completing personal details, you'll set up account credentials and 2FA verification.</html>");
+        securityInfoLabel.setFont(new Font("Raleway", Font.ITALIC, 14));
+        securityInfoLabel.setBounds(150, 120, 600, 40);
+        securityInfoLabel.setForeground(new Color(0, 102, 204));
+        add(securityInfoLabel);
+        
         JLabel name = new JLabel("Name:");
         name.setFont(new Font("Raleway", Font.BOLD, 18));
         name.setBounds(100, 150, 100, 30);
         add(name);
         nameTextField = new JTextField();
         nameTextField.setBounds(250, 150, 400, 28);
+        /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+         * Added input validation listener
+         */
+        nameTextField.addKeyListener(createValidationListener("name"));
         add(nameTextField);
         
         JLabel fname = new JLabel("Father's Name:");
@@ -81,13 +109,16 @@ public class Signup1 extends JFrame implements ActionListener{
         gendergroup.add(male);
         gendergroup.add(female);
         
-        
         JLabel dob = new JLabel("Date of Birth:");
         dob.setFont(new Font("Raleway", Font.BOLD, 18));
         dob.setBounds(100, 350, 190, 30);
         add(dob);
         dobTextField = new JTextField();
         dobTextField.setBounds(250, 350, 400, 28);
+        /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+         * Added DOB validation listener
+         */
+        dobTextField.addKeyListener(createValidationListener("dob"));
         add(dobTextField);
         
         JLabel email = new JLabel("Email Address:");
@@ -96,6 +127,10 @@ public class Signup1 extends JFrame implements ActionListener{
         add(email);
         emailTextField = new JTextField();
         emailTextField.setBounds(250, 400, 400, 28);
+        /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+         * Added email validation listener
+         */
+        emailTextField.addKeyListener(createValidationListener("email"));
         add(emailTextField);
         
         JLabel marital = new JLabel("Marital Status:");
@@ -157,8 +192,23 @@ public class Signup1 extends JFrame implements ActionListener{
         natTextField = new JTextField();
         natTextField.setBounds(250, 650, 400, 28);
         add(natTextField);
-          
         
+        /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+         * Added validation status label
+         */
+        validationStatusLabel = new JLabel("");
+        validationStatusLabel.setFont(new Font("Raleway", Font.PLAIN, 14));
+        validationStatusLabel.setBounds(250, 680, 400, 20);
+        add(validationStatusLabel);
+        
+        /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+         * Initialize validation status tracking
+         */
+        validationStatus = new HashMap<>();
+        validationStatus.put("name", false);
+        validationStatus.put("dob", false);
+        validationStatus.put("email", false);
+          
         npage = new JButton("NEXT PAGE");
         npage.setBounds(360, 710, 120, 35);
         npage.setBackground(Color.black);
@@ -166,63 +216,228 @@ public class Signup1 extends JFrame implements ActionListener{
         npage.addActionListener(this);
         add(npage);
         
-
-        
-       getContentPane().setBackground(new Color(204, 255, 255));
+        getContentPane().setBackground(new Color(204, 255, 255));
         setSize(850,850);
         setVisible(true);
     }
-      public void actionPerformed(final ActionEvent ae) {
-      
-      String formno = "" + fnum;
-      String name = nameTextField.getText();
-      String fname = fnameTextField.getText();
-      String mname = mnameTextField.getText();
-      String gender = null;
-      if (male.isSelected()){
-          gender = "Male";
-      } else if(female.isSelected()){
-          gender = "Female";
-                  
-      }
-      String dob = dobTextField.getText();
-      String email = emailTextField.getText();
-      String marital = "null";
-      if (married.isSelected()) {
-          marital = "Married";
-      } else if(unmarried.isSelected()){
-          marital = "Unmarried";           
-      } else if(other.isSelected()){
-          marital = "Other";  
-      }
-      String address = addressTextField.getText();
-      String city = cityTextField.getText();
-      String state = stateTextField.getText();
-      String nat = natTextField.getText();
-      
-      try {
-         if (name.equals("")) {
-             JOptionPane.showMessageDialog(null, "Name is must be Required");
-         } else{
-             ConnectionSql c = new ConnectionSql();
-             String query = "Insert into signup1 value('"+formno+"','" + name + "','" + fname + "','" + mname + "','" + dob + "','" + gender + "','" + email + "','" + marital + "','" + address + "','" + city + "','" + state + "','" + nat + "')";
-             c.s.executeUpdate(query); 
-             setVisible(false);
-              new Signup2(formno).setVisible(true);
+    
+    /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+     * Helper method to create validation listeners for different fields
+     */
+    private KeyAdapter createValidationListener(final String fieldType) {
+        return new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                JTextField field = (JTextField) e.getSource();
+                String value = field.getText();
+                
+                boolean isValid = false;
+                
+                switch (fieldType) {
+                    case "name":
+                        // Name should be at least 2 characters and contain only letters
+                        isValid = value.length() >= 2 && value.matches("[a-zA-Z\\s]+");
+                        break;
+                    case "dob":
+                        // Simple date format validation (DD-MM-YYYY)
+                        isValid = value.matches("^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-(19|20)\\d\\d$");
+                        break;
+                    case "email":
+                        // Basic email validation
+                        isValid = ValidationUtils.isValidEmail(value);
+                        break;
+                }
+                
+                // Update validation status
+                validationStatus.put(fieldType, isValid);
+                
+                // Visual feedback
+                field.setBackground(isValid ? Color.WHITE : new Color(255, 235, 235));
+                
+                // Update validation status message
+                updateValidationStatus();
             }
-         
-      } catch(Exception e){
-          System.out.println(e);
+        };
+    }
+    
+    /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+     * Method to update validation status message
+     */
+    private void updateValidationStatus() {
+        boolean allValid = true;
+        StringBuilder message = new StringBuilder();
         
-      }
-     }
-   
- public static void main(final String[] args){
+        for (Map.Entry<String, Boolean> entry : validationStatus.entrySet()) {
+            if (!entry.getValue()) {
+                allValid = false;
+                
+                switch (entry.getKey()) {
+                    case "name":
+                        message.append("Name must be at least 2 characters (letters only). ");
+                        break;
+                    case "dob":
+                        message.append("Date of Birth must be in DD-MM-YYYY format. ");
+                        break;
+                    case "email":
+                        message.append("Please enter a valid email address. ");
+                        break;
+                }
+            }
+        }
+        
+        if (allValid) {
+            validationStatusLabel.setText("All inputs are valid!");
+            validationStatusLabel.setForeground(new Color(0, 128, 0));
+        } else {
+            validationStatusLabel.setText(message.toString());
+            validationStatusLabel.setForeground(Color.RED);
+        }
+    }
+    
+    /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+     * Enhanced action performed method with proper validation and security
+     */
+    public void actionPerformed(final ActionEvent ae) {
+        // Get form data
+        String formno = "" + fnum;
+        String name = ValidationUtils.sanitizeInput(nameTextField.getText());
+        String fname = ValidationUtils.sanitizeInput(fnameTextField.getText());
+        String mname = ValidationUtils.sanitizeInput(mnameTextField.getText());
+        String gender = null;
+        if (male.isSelected()){
+            gender = "Male";
+        } else if(female.isSelected()){
+            gender = "Female";
+        }
+        String dob = ValidationUtils.sanitizeInput(dobTextField.getText());
+        String email = ValidationUtils.sanitizeInput(emailTextField.getText());
+        String marital = "null";
+        if (married.isSelected()) {
+            marital = "Married";
+        } else if(unmarried.isSelected()){
+            marital = "Unmarried";           
+        } else if(other.isSelected()){
+            marital = "Other";  
+        }
+        String address = ValidationUtils.sanitizeInput(addressTextField.getText());
+        String city = ValidationUtils.sanitizeInput(cityTextField.getText());
+        String state = ValidationUtils.sanitizeInput(stateTextField.getText());
+        String nat = ValidationUtils.sanitizeInput(natTextField.getText());
+        
+        /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+         * Enhanced validation logic
+         */
+        try {
+            boolean isValid = true;
+            StringBuilder errorMessage = new StringBuilder("Please correct the following errors:\n");
+            
+            // Required field validation
+            if (name.trim().isEmpty()) {
+                errorMessage.append("• Name is required\n");
+                isValid = false;
+            } else if (!name.matches("[a-zA-Z\\s]+")) {
+                errorMessage.append("• Name must contain only letters\n");
+                isValid = false;
+            }
+            
+            if (gender == null) {
+                errorMessage.append("• Gender selection is required\n");
+                isValid = false;
+            }
+            
+            if (dob.trim().isEmpty()) {
+                errorMessage.append("• Date of Birth is required\n");
+                isValid = false;
+            } else if (!dob.matches("^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-(19|20)\\d\\d$")) {
+                errorMessage.append("• Date of Birth must be in DD-MM-YYYY format\n");
+                isValid = false;
+            }
+            
+            if (email.trim().isEmpty()) {
+                errorMessage.append("• Email is required\n");
+                isValid = false;
+            } else if (!ValidationUtils.isValidEmail(email)) {
+                errorMessage.append("• Please enter a valid email address\n");
+                isValid = false;
+            }
+            
+            if (marital.equals("null")) {
+                errorMessage.append("• Marital Status selection is required\n");
+                isValid = false;
+            }
+            
+            if (address.trim().isEmpty()) {
+                errorMessage.append("• Address is required\n");
+                isValid = false;
+            }
+            
+            if (city.trim().isEmpty()) {
+                errorMessage.append("• City is required\n");
+                isValid = false;
+            }
+            
+            if (state.trim().isEmpty()) {
+                errorMessage.append("• State is required\n");
+                isValid = false;
+            }
+            
+            if (nat.trim().isEmpty()) {
+                errorMessage.append("• Nationality is required\n");
+                isValid = false;
+            }
+            
+            if (!isValid) {
+                JOptionPane.showMessageDialog(null, errorMessage.toString(), "Validation Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+             * Use ConnectionSql with parameterized query to prevent SQL injection
+             */
+            ConnectionSql c = new ConnectionSql();
+            PreparedStatement pstmt = c.getConnection().prepareStatement(
+                "INSERT INTO signup1 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            pstmt.setString(1, formno);
+            pstmt.setString(2, name);
+            pstmt.setString(3, fname);
+            pstmt.setString(4, mname);
+            pstmt.setString(5, dob);
+            pstmt.setString(6, gender);
+            pstmt.setString(7, email);
+            pstmt.setString(8, marital);
+            pstmt.setString(9, address);
+            pstmt.setString(10, city);
+            pstmt.setString(11, state);
+            pstmt.setString(12, nat);
+            
+            pstmt.executeUpdate();
+            
+            /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+             * Audit logging for security
+             */
+            AuditLogger.logActivity(formno, "Signup Step 1 completed", "Registration");
+            
+            /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+             * Navigate to next signup step with 2FA setup
+             */
+            setVisible(false);
+            new Signup2(formno).setVisible(true);
+            
+        } catch(Exception e) {
+            /* [AGENT GENERATED CODE - REQUIREMENT:US-1]
+             * Use proper error handling
+             */
+            ErrorHandler.handleException(e, "Error during signup process");
+        }
+    }
+    
+    public static void main(final String[] args){
         new Signup1();
- }
+    }
 }
 
- 
-
-        
-
+/* [AGENT GENERATED CODE]
+ * Test Case IDs: TC-SU1-001, TC-SU1-002, TC-SU1-003, TC-SEC-002
+ * Requirement IDs: US-1 (Account Login & Authentication)
+ * Agent Run: AGENT-20251127-01
+ */

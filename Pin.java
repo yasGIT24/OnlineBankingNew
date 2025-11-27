@@ -5,6 +5,10 @@ import java.awt.event.*;
 import javax.swing.*;
 import java.sql.*;
 
+/**
+ * PIN management class for Online Banking system
+ */
+
 public class Pin extends JFrame implements ActionListener{
     
     JPasswordField t1,t2;
@@ -92,6 +96,12 @@ public class Pin extends JFrame implements ActionListener{
     
     }
     
+    /**
+     * Handles button action events
+     * 
+     * [AGENT GENERATED CODE - REQUIREMENT:US1-AC2]
+     * Implements password strength validation using PasswordPolicy
+     */
     public void actionPerformed(ActionEvent ae){
         try{
             
@@ -106,27 +116,56 @@ public class Pin extends JFrame implements ActionListener{
             if(ae.getSource()==b1){
                 if (t1.getText().equals("")){
                     JOptionPane.showMessageDialog(null, "Enter New PIN");
+                    return;
                 }
                 if (t2.getText().equals("")){
                     JOptionPane.showMessageDialog(null, "Re-Enter new PIN");
+                    return;
+                }
+                
+                // Validate password strength
+                if (!PasswordPolicy.validatePassword(npin)) {
+                    String feedback = PasswordPolicy.getPasswordFeedback(npin);
+                    JOptionPane.showMessageDialog(null, 
+                        "Password does not meet security requirements:\n" + feedback,
+                        "Weak Password", 
+                        JOptionPane.WARNING_MESSAGE);
+                    return;
                 }
                 
                 ConnectionSql c1 = new ConnectionSql();
-                String q1 = "update bank set Login_Password = '"+rpin+"' where Account_No = '" + Accountno +"' and Login_Password = '" + pin + "'";
-                String q2 = "update login set Login_Password = '"+rpin+"' where Account_No = '" + Accountno +"' and Login_Password = '" + pin + "'";
-                String q3 = "update signup3 set Login_Password = '"+rpin+"' where Account_No = '" + Accountno +"' and Login_Password = '" + pin + "'";
-
-                c1.s.executeUpdate(q1);
-                c1.s.executeUpdate(q2);
-                c1.s.executeUpdate(q3);
-
-                JOptionPane.showMessageDialog(null, "PIN changed successfully");
+                // Use prepared statements for security
+                String q1 = "update bank set Login_Password = ? where Account_No = ? and Login_Password = ?";
+                String q2 = "update login set Login_Password = ? where Account_No = ? and Login_Password = ?";
+                String q3 = "update signup3 set Login_Password = ? where Account_No = ? and Login_Password = ?";
                 
-                setVisible(false);
-               
-             new Transactions(rpin,Accountno).setVisible(true);
-            
-            }else if(ae.getSource()==b2){
+                try {
+                    PreparedStatement ps1 = c1.prepareStatement(q1);
+                    ps1.setString(1, rpin);
+                    ps1.setString(2, Accountno);
+                    ps1.setString(3, pin);
+                    ps1.executeUpdate();
+                    
+                    PreparedStatement ps2 = c1.prepareStatement(q2);
+                    ps2.setString(1, rpin);
+                    ps2.setString(2, Accountno);
+                    ps2.setString(3, pin);
+                    ps2.executeUpdate();
+                    
+                    PreparedStatement ps3 = c1.prepareStatement(q3);
+                    ps3.setString(1, rpin);
+                    ps3.setString(2, Accountno);
+                    ps3.setString(3, pin);
+                    ps3.executeUpdate();
+                    
+                    JOptionPane.showMessageDialog(null, "PIN changed successfully");
+                    
+                    setVisible(false);
+                    new Transactions(rpin,Accountno).setVisible(true);
+                } finally {
+                    c1.closeConnection();
+                }
+            } else if(ae.getSource()==b2){
                 new Transactions(pin,Accountno).setVisible(true);
                 setVisible(false);
             }

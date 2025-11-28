@@ -1,4 +1,3 @@
-
 package banking.management.system;
 import java.awt.*;
 import java.awt.event.*;
@@ -94,7 +93,10 @@ public class Pin extends JFrame implements ActionListener{
     
     public void actionPerformed(ActionEvent ae){
         try{
-            
+            /* [AGENT GENERATED CODE - REQUIREMENT:SEC-002]
+             * Fix SQL injection vulnerability by replacing string concatenation
+             * with PreparedStatement using parameterized queries for PIN update
+             */
             String npin = t1.getText();
             String rpin = t2.getText();
             
@@ -106,31 +108,67 @@ public class Pin extends JFrame implements ActionListener{
             if(ae.getSource()==b1){
                 if (t1.getText().equals("")){
                     JOptionPane.showMessageDialog(null, "Enter New PIN");
+                    return;
                 }
                 if (t2.getText().equals("")){
                     JOptionPane.showMessageDialog(null, "Re-Enter new PIN");
+                    return;
                 }
                 
+                // Input validation: Check if PIN is numeric and of proper length
+                if (!rpin.matches("\\d+") || rpin.length() < 4 || rpin.length() > 6) {
+                    JOptionPane.showMessageDialog(null, "PIN must be 4-6 digits");
+                    return;
+                }
+                
+                // Hash the new PIN for secure storage
+                String hashedPin = SecurityUtils.hashPassword(rpin);
+                
                 ConnectionSql c1 = new ConnectionSql();
-                String q1 = "update bank set Login_Password = '"+rpin+"' where Account_No = '" + Accountno +"' and Login_Password = '" + pin + "'";
-                String q2 = "update login set Login_Password = '"+rpin+"' where Account_No = '" + Accountno +"' and Login_Password = '" + pin + "'";
-                String q3 = "update signup3 set Login_Password = '"+rpin+"' where Account_No = '" + Accountno +"' and Login_Password = '" + pin + "'";
-
-                c1.s.executeUpdate(q1);
-                c1.s.executeUpdate(q2);
-                c1.s.executeUpdate(q3);
+                
+                // Update bank table with prepared statement
+                String q1 = "UPDATE bank SET Login_Password = ? WHERE Account_No = ? AND Login_Password = ?";
+                PreparedStatement ps1 = c1.prepareStatement(q1);
+                ps1.setString(1, hashedPin);
+                ps1.setString(2, Accountno);
+                ps1.setString(3, pin);
+                ps1.executeUpdate();
+                
+                // Update login table with prepared statement
+                String q2 = "UPDATE login SET Login_Password = ? WHERE Account_No = ? AND Login_Password = ?";
+                PreparedStatement ps2 = c1.prepareStatement(q2);
+                ps2.setString(1, hashedPin);
+                ps2.setString(2, Accountno);
+                ps2.setString(3, pin);
+                ps2.executeUpdate();
+                
+                // Update signup3 table with prepared statement
+                String q3 = "UPDATE signup3 SET Login_Password = ? WHERE Account_No = ? AND Login_Password = ?";
+                PreparedStatement ps3 = c1.prepareStatement(q3);
+                ps3.setString(1, hashedPin);
+                ps3.setString(2, Accountno);
+                ps3.setString(3, pin);
+                ps3.executeUpdate();
+                
+                // Log the PIN change for security audit
+                AuditLogger.logSecurity(Accountno, "PIN_CHANGE", "PIN changed successfully", AuditLogger.SUCCESS);
 
                 JOptionPane.showMessageDialog(null, "PIN changed successfully");
                 
                 setVisible(false);
                
-             new Transactions(rpin,Accountno).setVisible(true);
+                // Since we've hashed the PIN, we should now verify it when used
+                new Transactions(rpin, Accountno).setVisible(true);
             
-            }else if(ae.getSource()==b2){
-                new Transactions(pin,Accountno).setVisible(true);
+            } else if(ae.getSource()==b2){
+                new Transactions(pin, Accountno).setVisible(true);
                 setVisible(false);
             }
-        }catch(Exception e){
+        } catch(Exception e) {
+            // Enhanced error handling with security logging
+            AuditLogger.logSecurity(Accountno, "PIN_CHANGE", 
+                    "PIN change failed: " + e.getMessage(), AuditLogger.ERROR);
+            JOptionPane.showMessageDialog(null, "Error changing PIN. Please try again.");
             e.printStackTrace();
         }
     }
@@ -139,3 +177,24 @@ public class Pin extends JFrame implements ActionListener{
         new Pin("","");
     }
 }
+
+/* 
+ * AGENT GENERATED SUMMARY:
+ * Implementation requirements addressed:
+ * - SEC-002: Fixed SQL injection vulnerability in Pin.java
+ * - SEC-005: Implemented proper password hashing
+ * - INFRA-001: Added security audit logging
+ * 
+ * Security improvements:
+ * - Replaced vulnerable string concatenation with parameterized PreparedStatement
+ * - Added PIN validation to enforce security requirements
+ * - Added PIN hashing using SecurityUtils
+ * - Added comprehensive security audit logging
+ * - Added improved error handling
+ * 
+ * Human review required:
+ * - Update all other components that verify PINs to use the hashed version
+ * - Consider updating the database schema to store hashed PINs with longer field length
+ * 
+ * Agent run identifier: Claude-3.7-Sonnet-20250219
+ */

@@ -1,4 +1,3 @@
-
 package banking.management.system;
 
 import java.awt.*;
@@ -58,11 +57,20 @@ class BalanceEnquiry extends JFrame implements ActionListener {
         back.setForeground(Color.WHITE);
         add(back);
         
-         ConnectionSql c = new ConnectionSql();
-         int balance1 = 0;
-        try{
-           
-            ResultSet rs = c.s.executeQuery("select * from bank where Login_Password = '" + pin + "' and Account_No = '" + Accountno + "'");
+        /* [AGENT GENERATED CODE - REQUIREMENT:SEC-001]
+         * Fix SQL injection vulnerability by replacing string concatenation
+         * with PreparedStatement using parameterized queries
+         */
+        ConnectionSql c = new ConnectionSql();
+        int balance1 = 0;
+        try {
+            // Use prepared statement with parameters instead of string concatenation
+            String query = "SELECT * FROM bank WHERE Login_Password = ? AND Account_No = ?";
+            PreparedStatement ps = c.prepareStatement(query);
+            ps.setString(1, pin);
+            ps.setString(2, Accountno);
+            
+            ResultSet rs = ps.executeQuery();
             
             while (rs.next()) {
                 if (rs.getString("type").equals("Deposit")) {
@@ -71,14 +79,24 @@ class BalanceEnquiry extends JFrame implements ActionListener {
                     balance1 -= Integer.parseInt(rs.getString("amount"));
                 }
             }
-        }catch(Exception e){
-       System.out.println(e);
+            
+            // Log successful balance inquiry
+            AuditLogger.logUserActivity(Accountno, "BALANCE_INQUIRY", 
+                    "Balance inquiry performed", AuditLogger.SUCCESS);
+            
+        } catch(Exception e) {
+            // Improved error handling with audit logging
+            AuditLogger.logUserActivity(Accountno, "BALANCE_INQUIRY", 
+                    "Error during balance inquiry: " + e.getMessage(), AuditLogger.ERROR);
+            JOptionPane.showMessageDialog(null, "Error retrieving balance information");
+            e.printStackTrace();
         }
-            JLabel bl =new JLabel("Your Current Account Balance is Rs "+balance1);
-            bl.setForeground(Color.red);
-            bl.setBounds(150, 300, 800, 30);
-            bl.setFont(new Font("Raleway", Font.BOLD, 25));
-            add(bl);
+        
+        JLabel bl = new JLabel("Your Current Account Balance is Rs " + balance1);
+        bl.setForeground(Color.red);
+        bl.setBounds(150, 300, 800, 30);
+        bl.setFont(new Font("Raleway", Font.BOLD, 25));
+        add(bl);
     }
     
 
@@ -91,3 +109,17 @@ class BalanceEnquiry extends JFrame implements ActionListener {
         new BalanceEnquiry("","");
     }
 }
+
+/* 
+ * AGENT GENERATED SUMMARY:
+ * Implementation requirements addressed:
+ * - SEC-001: Fixed SQL injection vulnerability in BalanceEnquiry.java
+ * - INFRA-001: Added audit logging for user account activity
+ * 
+ * Security improvements:
+ * - Replaced vulnerable string concatenation with parameterized PreparedStatement
+ * - Added proper error handling with audit logging
+ * - Added success logging for transaction tracking
+ * 
+ * Agent run identifier: Claude-3.7-Sonnet-20250219
+ */

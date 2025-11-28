@@ -10,7 +10,22 @@ import java.awt.event.*;
 public class Transactions extends JFrame implements ActionListener
 {
   JLabel l1;
-  JButton b1, b2, b3, b4, b5, b6, b7;
+  /* [AGENT GENERATED CODE - REQUIREMENT:REQ001]
+   * Adding new buttons for PDF statement downloads
+   */
+  JButton b1, b2, b3, b4, b5, b6, b7, b8;
+  
+  /* [AGENT GENERATED CODE - REQUIREMENT:REQ002]
+   * Adding new buttons for Digital wallet integration
+   */
+  JButton b9;
+  
+  /* [AGENT GENERATED CODE - REQUIREMENT:REQ003]
+   * Adding new button for Currency conversion
+   */
+  JButton b10;
+  /* [END AGENT GENERATED CODE] */
+  
   String pin;
   String Accountno;
   
@@ -36,7 +51,6 @@ public class Transactions extends JFrame implements ActionListener
 //    JLabel image3 = new JLabel(p3);
 //    image1.setBounds(400,400,500,500);
 //    add(image3);
-    
     
     
 
@@ -109,8 +123,42 @@ public class Transactions extends JFrame implements ActionListener
      b6.addActionListener(this);
      add(b6);
     
+     /* [AGENT GENERATED CODE - REQUIREMENT:REQ001]
+      * Adding Statement Download button in UI
+      */
+     b8 = new JButton("DOWNLOAD STATEMENT");
+     b8.setBounds(150, 410, 180, 45);
+     b8.setBackground(new Color(204, 229, 255));
+     b8.setFont(new Font("Arial", Font.BOLD, 13));
+     b8.setForeground(Color.black);
+     b8.addActionListener(this);
+     add(b8);
+     
+     /* [AGENT GENERATED CODE - REQUIREMENT:REQ002]
+      * Adding Digital Wallet button in UI
+      */
+     b9 = new JButton("DIGITAL WALLET");
+     b9.setBounds(400, 410, 180, 45);
+     b9.setBackground(new Color(204, 229, 255));
+     b9.setFont(new Font("Arial", Font.BOLD, 13));
+     b9.setForeground(Color.black);
+     b9.addActionListener(this);
+     add(b9);
+     
+     /* [AGENT GENERATED CODE - REQUIREMENT:REQ003]
+      * Adding Currency Converter button in UI
+      */
+     b10 = new JButton("CURRENCY CONVERTER");
+     b10.setBounds(150, 480, 180, 45);
+     b10.setBackground(new Color(204, 229, 255));
+     b10.setFont(new Font("Arial", Font.BOLD, 13));
+     b10.setForeground(Color.black);
+     b10.addActionListener(this);
+     add(b10);
+     /* [END AGENT GENERATED CODE] */
+    
      b7 = new JButton("SIGN-OUT");
-     b7.setBounds(300, 410, 180, 45);
+     b7.setBounds(400, 480, 180, 45);
      b7.setBackground(new Color(190, 229, 255));
      b7.setFont(new Font("Arial", Font.BOLD, 13));
      b7.setForeground(Color.black);
@@ -149,8 +197,30 @@ public class Transactions extends JFrame implements ActionListener
       setVisible(false);
       new BalanceEnquiry(this.pin,this.Accountno).setVisible(true);
       
-    }else 
- if (ae.getSource() == b7) {
+    } 
+    /* [AGENT GENERATED CODE - REQUIREMENT:REQ001]
+     * Adding action handler for statement download button
+     */
+    else if (ae.getSource() == b8) {
+      setVisible(false);
+      new StatementDownload(this.pin,this.Accountno).setVisible(true);
+    } 
+    /* [AGENT GENERATED CODE - REQUIREMENT:REQ002]
+     * Adding action handler for digital wallet button
+     */
+    else if (ae.getSource() == b9) {
+      setVisible(false);
+      new DigitalWallet(this.pin,this.Accountno).setVisible(true);
+    }
+    /* [AGENT GENERATED CODE - REQUIREMENT:REQ003]
+     * Adding action handler for currency converter button
+     */
+    else if (ae.getSource() == b10) {
+      setVisible(false);
+      new CurrencyConverter(this.pin,this.Accountno).setVisible(true);
+    }
+    /* [END AGENT GENERATED CODE] */
+    else if (ae.getSource() == b7) {
       System.exit(0);
     }
   }
@@ -160,3 +230,11 @@ public class Transactions extends JFrame implements ActionListener
     new Transactions("","");
   }
 }
+
+/* 
+ * Requirements implemented:
+ * REQ001: PDF Statement Downloads
+ * REQ002: Digital Wallet Integration
+ * REQ003: Currency Conversion Enhancement
+ * Agent Run Identifier: CLAUDE-3-SONNET-20250219
+ */

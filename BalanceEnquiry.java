@@ -1,4 +1,3 @@
-
 package banking.management.system;
 
 import java.awt.*;
@@ -12,6 +11,15 @@ import java.util.*;
  * @author Adarsh Kunal
  */
 
+/* [AGENT GENERATED CODE - REQUIREMENT:User Story 2: View Account Balance]
+ * Security fixes:
+ * 1. SQL injection vulnerability fixed by using PreparedStatement
+ * 2. Added proper exception handling with user feedback
+ * 3. Added session validation to prevent unauthorized access
+ * 
+ * Linked to Value Stream Step: Account Summary View
+ * Linked to test cases: BAL-01, BAL-02, SEC-03
+ */
 class BalanceEnquiry extends JFrame implements ActionListener {
     JButton back;
     JLabel l1, l3;
@@ -28,7 +36,16 @@ class BalanceEnquiry extends JFrame implements ActionListener {
         this.pin = pin;
         this.Accountno = Accountno;
 
-        
+        // Validate session before proceeding
+        LoginModel loginModel = new LoginModel();
+        if (!loginModel.isSessionValid()) {
+            JOptionPane.showMessageDialog(this, 
+                "Your session has expired. Please login again.", 
+                "Session Timeout", 
+                JOptionPane.ERROR_MESSAGE);
+            dispose();
+            return;
+        }
         
      JLabel text = new JLabel("WELCOME TO THE BANK ");
      text.setFont(new Font("Osward", Font.BOLD,32));
@@ -58,11 +75,18 @@ class BalanceEnquiry extends JFrame implements ActionListener {
         back.setForeground(Color.WHITE);
         add(back);
         
-         ConnectionSql c = new ConnectionSql();
-         int balance1 = 0;
-        try{
-           
-            ResultSet rs = c.s.executeQuery("select * from bank where Login_Password = '" + pin + "' and Account_No = '" + Accountno + "'");
+        // Use secure connection and prepared statement to prevent SQL injection
+        ConnectionSql c = new ConnectionSql();
+        int balance1 = 0;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            String query = "SELECT * FROM bank WHERE Login_Password = ? AND Account_No = ?";
+            ps = c.prepareStatement(query);
+            ps.setString(1, pin);
+            ps.setString(2, Accountno);
+            rs = ps.executeQuery();
             
             while (rs.next()) {
                 if (rs.getString("type").equals("Deposit")) {
@@ -71,14 +95,28 @@ class BalanceEnquiry extends JFrame implements ActionListener {
                     balance1 -= Integer.parseInt(rs.getString("amount"));
                 }
             }
-        }catch(Exception e){
-       System.out.println(e);
+        } catch (SQLException e) {
+            System.out.println("Database error: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, 
+                "Error retrieving account balance. Please try again later.", 
+                "Database Error", 
+                JOptionPane.ERROR_MESSAGE);
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+                // Connection will be closed by ConnectionSql's closeConnection method
+                c.closeConnection();
+            } catch (SQLException e) {
+                System.out.println("Error closing resources: " + e.getMessage());
+            }
         }
-            JLabel bl =new JLabel("Your Current Account Balance is Rs "+balance1);
-            bl.setForeground(Color.red);
-            bl.setBounds(150, 300, 800, 30);
-            bl.setFont(new Font("Raleway", Font.BOLD, 25));
-            add(bl);
+        
+        JLabel bl = new JLabel("Your Current Account Balance is Rs "+balance1);
+        bl.setForeground(Color.red);
+        bl.setBounds(150, 300, 800, 30);
+        bl.setFont(new Font("Raleway", Font.BOLD, 25));
+        add(bl);
     }
     
 
@@ -87,7 +125,18 @@ class BalanceEnquiry extends JFrame implements ActionListener {
         new Transactions(pin, Accountno).setVisible(true);
     }
 
+    // Main method for testing purposes only - should be removed in production
     public static void main(String[] args) {
         new BalanceEnquiry("","");
     }
 }
+
+/* 
+ * Test cases:
+ * BAL-01: Verify balance calculation correctly adds deposits and subtracts withdrawals
+ * BAL-02: Verify proper display of account balance with currency
+ * SEC-03: Verify SQL injection prevention in balance query
+ * 
+ * Agent run: OnlineBanking-Security-Implementation-1
+ * End of generated code section
+ */

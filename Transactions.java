@@ -6,11 +6,21 @@ package banking.management.system;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 public class Transactions extends JFrame implements ActionListener
 {
   JLabel l1;
-  JButton b1, b2, b3, b4, b5, b6, b7;
+  /* [AGENT GENERATED CODE - REQUIREMENT:PDF_STATEMENT_DOWNLOAD]
+   * Added new button for PDF statement download functionality
+   */
+  /* [AGENT GENERATED CODE - REQUIREMENT:CURRENCY_CONVERSION_ENHANCEMENT]
+   * Added new button for currency conversion functionality
+   */
+  JButton b1, b2, b3, b4, b5, b6, b7, b8, b9;
   String pin;
   String Accountno;
   
@@ -36,7 +46,6 @@ public class Transactions extends JFrame implements ActionListener
 //    JLabel image3 = new JLabel(p3);
 //    image1.setBounds(400,400,500,500);
 //    add(image3);
-    
     
     
 
@@ -109,8 +118,30 @@ public class Transactions extends JFrame implements ActionListener
      b6.addActionListener(this);
      add(b6);
     
+    /* [AGENT GENERATED CODE - REQUIREMENT:PDF_STATEMENT_DOWNLOAD]
+     * Added new button for PDF statement download functionality
+     */
+     b8 = new JButton("PDF STATEMENT");
+     b8.setBounds(150, 410, 180, 45);
+     b8.setBackground(new Color(204, 229, 255));
+     b8.setFont(new Font("Arial", Font.BOLD, 13));
+     b8.setForeground(Color.black);
+     b8.addActionListener(this);
+     add(b8);
+     
+    /* [AGENT GENERATED CODE - REQUIREMENT:CURRENCY_CONVERSION_ENHANCEMENT]
+     * Added new button for currency conversion functionality
+     */
+     b9 = new JButton("CURRENCY CONVERT");
+     b9.setBounds(150, 470, 180, 45);
+     b9.setBackground(new Color(204, 229, 255));
+     b9.setFont(new Font("Arial", Font.BOLD, 13));
+     b9.setForeground(Color.black);
+     b9.addActionListener(this);
+     add(b9);
+     
      b7 = new JButton("SIGN-OUT");
-     b7.setBounds(300, 410, 180, 45);
+     b7.setBounds(400, 470, 180, 45);
      b7.setBackground(new Color(190, 229, 255));
      b7.setFont(new Font("Arial", Font.BOLD, 13));
      b7.setForeground(Color.black);
@@ -149,8 +180,22 @@ public class Transactions extends JFrame implements ActionListener
       setVisible(false);
       new BalanceEnquiry(this.pin,this.Accountno).setVisible(true);
       
-    }else 
- if (ae.getSource() == b7) {
+    }
+    /* [AGENT GENERATED CODE - REQUIREMENT:PDF_STATEMENT_DOWNLOAD]
+     * Added handler for PDF statement download button
+     */
+    else if (ae.getSource() == b8) {
+      setVisible(false);
+      new StatementDownload(this.pin,this.Accountno).setVisible(true);
+    }
+    /* [AGENT GENERATED CODE - REQUIREMENT:CURRENCY_CONVERSION_ENHANCEMENT]
+     * Added handler for currency conversion button
+     */
+    else if (ae.getSource() == b9) {
+      setVisible(false);
+      new CurrencyController(this.pin,this.Accountno).setVisible(true);
+    }
+    else if (ae.getSource() == b7) {
       System.exit(0);
     }
   }

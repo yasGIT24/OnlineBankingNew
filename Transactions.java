@@ -10,7 +10,9 @@ import java.awt.event.*;
 public class Transactions extends JFrame implements ActionListener
 {
   JLabel l1;
-  JButton b1, b2, b3, b4, b5, b6, b7;
+  // [AGENT GENERATED CODE - REQUIREMENT:REQ-PDF-05]
+  // Added b8 button for Account Statement functionality
+  JButton b1, b2, b3, b4, b5, b6, b7, b8;
   String pin;
   String Accountno;
   
@@ -36,7 +38,6 @@ public class Transactions extends JFrame implements ActionListener
 //    JLabel image3 = new JLabel(p3);
 //    image1.setBounds(400,400,500,500);
 //    add(image3);
-    
     
     
 
@@ -108,9 +109,19 @@ public class Transactions extends JFrame implements ActionListener
      b6.setForeground(Color.black);
      b6.addActionListener(this);
      add(b6);
+     
+     // [AGENT GENERATED CODE - REQUIREMENT:REQ-PDF-05]
+     // Added Account Statement button
+     b8 = new JButton("ACCOUNT STATEMENT");
+     b8.setBounds(150, 410, 180, 45);
+     b8.setBackground(new Color(204, 229, 255));
+     b8.setFont(new Font("Arial", Font.BOLD, 13));
+     b8.setForeground(Color.black);
+     b8.addActionListener(this);
+     add(b8);
     
      b7 = new JButton("SIGN-OUT");
-     b7.setBounds(300, 410, 180, 45);
+     b7.setBounds(400, 410, 180, 45);
      b7.setBackground(new Color(190, 229, 255));
      b7.setFont(new Font("Arial", Font.BOLD, 13));
      b7.setForeground(Color.black);
@@ -149,8 +160,14 @@ public class Transactions extends JFrame implements ActionListener
       setVisible(false);
       new BalanceEnquiry(this.pin,this.Accountno).setVisible(true);
       
-    }else 
- if (ae.getSource() == b7) {
+    } 
+    // [AGENT GENERATED CODE - REQUIREMENT:REQ-PDF-05]
+    // Added handler for Account Statement button
+    else if (ae.getSource() == b8) {
+      setVisible(false);
+      new AccountStatement(this.Accountno, this.pin).setVisible(true);
+    }
+    else if (ae.getSource() == b7) {
       System.exit(0);
     }
   }
@@ -160,3 +177,10 @@ public class Transactions extends JFrame implements ActionListener
     new Transactions("","");
   }
 }
+
+// [AGENT GENERATED CODE - REQUIREMENT:REQ-PDF-05]
+// This file has been updated to add the Account Statement functionality to the transaction menu.
+// Changes include:
+// 1. Added a new button b8 for Account Statement
+// 2. Added action handler to open the AccountStatement screen
+// Agent run identifier: AGENT-PDF-UI-2025-12-02

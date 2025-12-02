@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.awt.event.*;
+import java.sql.*;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -24,8 +26,10 @@ public class Signup1 extends JFrame implements ActionListener{
         setLayout(null);
        // setUndecorated(true);
         
-        Random ran = new Random();
-        fnum = (Math.abs(ran.nextLong()%900L + 100000L));
+        // [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01]
+        // Using SecureRandom for better randomization of form numbers
+        SecureRandom secureRandom = new SecureRandom();
+        fnum = 100000L + Math.abs(secureRandom.nextLong() % 900000L);
         
         JLabel fromno = new JLabel("APPLICATION FORM NO:" + fnum);
         fromno.setFont(new Font("Raleway", Font.BOLD, 40));
@@ -172,7 +176,22 @@ public class Signup1 extends JFrame implements ActionListener{
         setSize(850,850);
         setVisible(true);
     }
-      public void actionPerformed(final ActionEvent ae) {
+    
+    // [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01]
+    // Validate email format using regex
+    private boolean isValidEmail(String email) {
+        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+        Pattern pattern = Pattern.compile(emailRegex);
+        return pattern.matcher(email).matches();
+    }
+    
+    // [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01]
+    // Validate date format (yyyy-MM-dd)
+    private boolean isValidDate(String date) {
+        return date.matches("\\d{4}-\\d{2}-\\d{2}");
+    }
+      
+    public void actionPerformed(final ActionEvent ae) {
       
       String formno = "" + fnum;
       String name = nameTextField.getText();
@@ -202,27 +221,79 @@ public class Signup1 extends JFrame implements ActionListener{
       
       try {
          if (name.equals("")) {
-             JOptionPane.showMessageDialog(null, "Name is must be Required");
-         } else{
-             ConnectionSql c = new ConnectionSql();
-             String query = "Insert into signup1 value('"+formno+"','" + name + "','" + fname + "','" + mname + "','" + dob + "','" + gender + "','" + email + "','" + marital + "','" + address + "','" + city + "','" + state + "','" + nat + "')";
-             c.s.executeUpdate(query); 
-             setVisible(false);
-              new Signup2(formno).setVisible(true);
-            }
+             JOptionPane.showMessageDialog(null, "Name is required");
+             return; // [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01] Added return statement
+         }
+         
+         // [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01]
+         // Add input validation for all fields
+         if (!isValidEmail(email)) {
+             JOptionPane.showMessageDialog(null, "Please enter a valid email address");
+             return;
+         }
+         
+         if (!isValidDate(dob)) {
+             JOptionPane.showMessageDialog(null, "Please enter date in format YYYY-MM-DD");
+             return;
+         }
+         
+         if (gender == null) {
+             JOptionPane.showMessageDialog(null, "Please select a gender");
+             return;
+         }
+         
+         if (marital.equals("null")) {
+             JOptionPane.showMessageDialog(null, "Please select marital status");
+             return;
+         }
+         
+         if (city.isEmpty() || state.isEmpty() || nat.isEmpty()) {
+             JOptionPane.showMessageDialog(null, "City, State and Nationality are required fields");
+             return;
+         }
+         
+         ConnectionSql c = new ConnectionSql();
+         
+         // [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01]
+         // Fix SQL Injection vulnerability by using PreparedStatement
+         String query = "INSERT INTO signup1 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+         PreparedStatement pstmt = c.prepareStatement(query);
+         pstmt.setString(1, formno);
+         pstmt.setString(2, name);
+         pstmt.setString(3, fname);
+         pstmt.setString(4, mname);
+         pstmt.setString(5, dob);
+         pstmt.setString(6, gender);
+         pstmt.setString(7, email);
+         pstmt.setString(8, marital);
+         pstmt.setString(9, address);
+         pstmt.setString(10, city);
+         pstmt.setString(11, state);
+         pstmt.setString(12, nat);
+         
+         pstmt.executeUpdate(); 
+         setVisible(false);
+         new Signup2(formno).setVisible(true);
          
       } catch(Exception e){
-          System.out.println(e);
-        
+          // [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01]
+          // Improved error handling - don't expose stack trace to user
+          System.err.println("Error in signup process: " + e.getMessage());
+          JOptionPane.showMessageDialog(null, "An error occurred during signup. Please try again.");
       }
      }
    
- public static void main(final String[] args){
+    public static void main(final String[] args){
         new Signup1();
- }
+    }
 }
 
- 
-
-        
-
+// [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01]
+// This file has been updated to fix SQL injection vulnerabilities and improve security.
+// Changes include:
+// 1. Using PreparedStatement instead of direct string concatenation
+// 2. Adding input validation for email and date formats
+// 3. Using SecureRandom for form number generation
+// 4. Adding required field validation
+// 5. Improved error handling to prevent information leakage
+// Agent run identifier: AGENT-SEC-FIX-2025-12-02

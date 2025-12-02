@@ -1,4 +1,3 @@
-
 package banking.management.system;
 import java.awt.*;
 import java.awt.event.*;
@@ -92,6 +91,13 @@ public class Pin extends JFrame implements ActionListener{
     
     }
     
+    // [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01]
+    // Validates if PIN meets security requirements
+    private boolean isValidPin(String pin) {
+        // Check if PIN is 4-6 digits only
+        return pin.matches("\\d{4,6}");
+    }
+    
     public void actionPerformed(ActionEvent ae){
         try{
             
@@ -103,35 +109,79 @@ public class Pin extends JFrame implements ActionListener{
                 return;
             }
             
+            // [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01]
+            // Validate PIN format
+            if(!isValidPin(npin)) {
+                JOptionPane.showMessageDialog(null, "PIN must be 4-6 digits");
+                return;
+            }
+            
             if(ae.getSource()==b1){
                 if (t1.getText().equals("")){
                     JOptionPane.showMessageDialog(null, "Enter New PIN");
+                    return; // [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01] Added return statement
                 }
                 if (t2.getText().equals("")){
                     JOptionPane.showMessageDialog(null, "Re-Enter new PIN");
+                    return; // [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01] Added return statement
                 }
                 
                 ConnectionSql c1 = new ConnectionSql();
-                String q1 = "update bank set Login_Password = '"+rpin+"' where Account_No = '" + Accountno +"' and Login_Password = '" + pin + "'";
-                String q2 = "update login set Login_Password = '"+rpin+"' where Account_No = '" + Accountno +"' and Login_Password = '" + pin + "'";
-                String q3 = "update signup3 set Login_Password = '"+rpin+"' where Account_No = '" + Accountno +"' and Login_Password = '" + pin + "'";
-
-                c1.s.executeUpdate(q1);
-                c1.s.executeUpdate(q2);
-                c1.s.executeUpdate(q3);
-
-                JOptionPane.showMessageDialog(null, "PIN changed successfully");
                 
-                setVisible(false);
-               
-             new Transactions(rpin,Accountno).setVisible(true);
+                // [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01]
+                // Fix SQL Injection vulnerability by using PreparedStatements
+                String q1 = "update bank set Login_Password = ? where Account_No = ? and Login_Password = ?";
+                String q2 = "update login set Login_Password = ? where Account_No = ? and Login_Password = ?";
+                String q3 = "update signup3 set Login_Password = ? where Account_No = ? and Login_Password = ?";
+
+                try {
+                    // Use transaction to ensure all updates succeed or all fail
+                    Connection conn = c1.prepareStatement("").getConnection();
+                    conn.setAutoCommit(false);
+                    
+                    PreparedStatement ps1 = conn.prepareStatement(q1);
+                    ps1.setString(1, rpin);
+                    ps1.setString(2, Accountno);
+                    ps1.setString(3, pin);
+                    ps1.executeUpdate();
+                    
+                    PreparedStatement ps2 = conn.prepareStatement(q2);
+                    ps2.setString(1, rpin);
+                    ps2.setString(2, Accountno);
+                    ps2.setString(3, pin);
+                    ps2.executeUpdate();
+                    
+                    PreparedStatement ps3 = conn.prepareStatement(q3);
+                    ps3.setString(1, rpin);
+                    ps3.setString(2, Accountno);
+                    ps3.setString(3, pin);
+                    ps3.executeUpdate();
+                    
+                    conn.commit();
+                    conn.setAutoCommit(true);
+                    
+                    // Update the session PIN to match the new value
+                    LoginModel.updateSessionPin(Accountno, rpin);
+                    
+                    JOptionPane.showMessageDialog(null, "PIN changed successfully");
+                    
+                    setVisible(false);
+                    new Transactions(rpin,Accountno).setVisible(true);
+                } catch (SQLException e) {
+                    // Log error and display generic message to user
+                    System.err.println("PIN change failed: " + e.getMessage());
+                    JOptionPane.showMessageDialog(null, "PIN change failed. Please try again.");
+                }
             
-            }else if(ae.getSource()==b2){
+            } else if(ae.getSource()==b2){
                 new Transactions(pin,Accountno).setVisible(true);
                 setVisible(false);
             }
-        }catch(Exception e){
-            e.printStackTrace();
+        } catch(Exception e){
+            // [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01]
+            // Improved error handling - don't expose stack trace to user
+            System.err.println("Error in PIN change: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "An error occurred. Please try again.");
         }
     }
 
@@ -139,3 +189,12 @@ public class Pin extends JFrame implements ActionListener{
         new Pin("","");
     }
 }
+
+// [AGENT GENERATED CODE - REQUIREMENT:REQ-SEC-01]
+// This file has been updated to fix SQL injection vulnerabilities and improve security.
+// Changes include:
+// 1. Using PreparedStatements instead of direct string concatenation
+// 2. Adding PIN format validation (4-6 digits only)
+// 3. Using transaction management to ensure data consistency
+// 4. Improved error handling to prevent information leakage
+// Agent run identifier: AGENT-SEC-FIX-2025-12-02

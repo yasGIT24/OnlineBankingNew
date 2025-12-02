@@ -171,6 +171,136 @@ public class TransactionHistoryService {
         
         return transactions;
     }
+
+    /* [AGENT GENERATED CODE - REQUIREMENT:Download Account Statement in PDF Format]
+     * Enhanced method to retrieve transactions with account details for PDF statement generation
+     * This method extends the original getTransactionHistory to include additional account information
+     * needed for complete statement generation.
+     */
+    public Map<String, Object> getAccountStatementData(String accountNo, Date startDate, Date endDate, String pin) {
+        Map<String, Object> statementData = new HashMap<>();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            // Validate PIN for security
+            if (!validatePin(accountNo, pin)) {
+                LOGGER.log(Level.WARNING, "Invalid PIN provided for account statement: {0}", accountNo);
+                return statementData; // Return empty map on invalid PIN
+            }
+            
+            // Get basic account information
+            String query = "SELECT l.name, l.Account_No, l.Account_Type FROM login l WHERE l.Account_No = ?";
+            ps = connection.prepareStatement(query);
+            ps.setString(1, accountNo);
+            rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                statementData.put("accountHolder", rs.getString("name"));
+                statementData.put("accountNumber", rs.getString("Account_No"));
+                statementData.put("accountType", rs.getString("Account_Type"));
+            } else {
+                LOGGER.log(Level.WARNING, "Account not found: {0}", accountNo);
+                return statementData; // Return empty map if account not found
+            }
+            
+            rs.close();
+            ps.close();
+            
+            // Get customer address from signup tables
+            query = "SELECT s1.formno, s1.name, s1.fname, s1.email, s2.address, s2.city, s2.state, s2.pin " +
+                    "FROM signup1 s1 JOIN signup2 s2 ON s1.formno = s2.formno " +
+                    "JOIN login l ON s1.formno = l.formno WHERE l.Account_No = ?";
+            ps = connection.prepareStatement(query);
+            ps.setString(1, accountNo);
+            rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                Map<String, String> customerDetails = new HashMap<>();
+                customerDetails.put("name", rs.getString("name"));
+                customerDetails.put("fatherName", rs.getString("fname"));
+                customerDetails.put("email", rs.getString("email"));
+                customerDetails.put("address", rs.getString("address"));
+                customerDetails.put("city", rs.getString("city"));
+                customerDetails.put("state", rs.getString("state"));
+                customerDetails.put("pinCode", rs.getString("pin"));
+                statementData.put("customerDetails", customerDetails);
+            }
+            
+            // Get transactions within date range
+            List<Transaction> transactions = getTransactionHistory(accountNo, startDate, endDate, TYPE_ALL, null, null, pin);
+            statementData.put("transactions", transactions);
+            
+            // Calculate summary information
+            double totalDeposits = 0;
+            double totalWithdrawals = 0;
+            for (Transaction transaction : transactions) {
+                double amount = Double.parseDouble(transaction.getAmount());
+                if (transaction.isCredit()) {
+                    totalDeposits += amount;
+                } else {
+                    totalWithdrawals += amount;
+                }
+            }
+            
+            Map<String, Double> summary = new HashMap<>();
+            summary.put("totalDeposits", totalDeposits);
+            summary.put("totalWithdrawals", totalWithdrawals);
+            summary.put("netChange", totalDeposits - totalWithdrawals);
+            
+            // Get current balance
+            if (!transactions.isEmpty()) {
+                summary.put("closingBalance", Double.parseDouble(transactions.get(0).getBalance()));
+                summary.put("openingBalance", calculateOpeningBalance(transactions));
+            }
+            
+            statementData.put("summary", summary);
+            
+            // Add statement period
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+            statementData.put("startDate", dateFormat.format(startDate));
+            statementData.put("endDate", dateFormat.format(endDate));
+            statementData.put("generatedDate", dateFormat.format(new Date()));
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error retrieving account statement data: {0}", e.getMessage());
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+            } catch (SQLException e) {
+                LOGGER.log(Level.SEVERE, "Error closing resources: {0}", e.getMessage());
+            }
+        }
+        
+        return statementData;
+    }
+    
+    /* [AGENT GENERATED CODE - REQUIREMENT:Download Account Statement in PDF Format]
+     * Calculate the opening balance for the statement period
+     */
+    private double calculateOpeningBalance(List<Transaction> transactions) {
+        if (transactions.isEmpty()) {
+            return 0.0;
+        }
+        
+        // Sort by date, oldest first
+        List<Transaction> sortedTransactions = new ArrayList<>(transactions);
+        Collections.sort(sortedTransactions, (t1, t2) -> t1.getDate().compareTo(t2.getDate()));
+        
+        // Get first transaction and its balance
+        Transaction firstTransaction = sortedTransactions.get(0);
+        double currentBalance = Double.parseDouble(firstTransaction.getBalance());
+        
+        // Subtract/add the first transaction to get opening balance
+        if (firstTransaction.isCredit()) {
+            currentBalance -= Double.parseDouble(firstTransaction.getAmount());
+        } else {
+            currentBalance += Double.parseDouble(firstTransaction.getAmount());
+        }
+        
+        return currentBalance;
+    }
     
     /**
      * Calculate running balance for each transaction in the list
@@ -249,18 +379,47 @@ public class TransactionHistoryService {
         return exportToCSV(transactions, filePath);
     }
     
-    /**
-     * Generate a PDF file with transaction history
-     * 
-     * @param transactions List of transactions to export
-     * @param filePath Path to export file
-     * @return true if successful, false otherwise
+    /* [AGENT GENERATED CODE - REQUIREMENT:Download Account Statement in PDF Format]
+     * Generate a PDF file with transaction history using PDFGeneratorUtil
+     * This method has been updated to use the actual PDF generation functionality
      */
     public boolean exportToPDF(List<Transaction> transactions, String filePath) {
-        // In a real implementation, this would use a PDF library like iText or PDFBox
-        // For this example, we'll just indicate it's not implemented
-        LOGGER.log(Level.WARNING, "PDF export not implemented");
-        return false;
+        try {
+            // Create account statement data map with minimal data for backward compatibility
+            Map<String, Object> statementData = new HashMap<>();
+            statementData.put("transactions", transactions);
+            statementData.put("generatedDate", new SimpleDateFormat("dd-MM-yyyy").format(new Date()));
+            
+            // Use PDFGeneratorUtil to generate PDF
+            PDFGeneratorUtil pdfGenerator = new PDFGeneratorUtil();
+            return pdfGenerator.generateTransactionPDF(statementData, filePath);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error generating PDF: {0}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /* [AGENT GENERATED CODE - REQUIREMENT:Download Account Statement in PDF Format]
+     * Generate a complete account statement PDF with all details
+     */
+    public boolean generateAccountStatementPDF(String accountNo, Date startDate, Date endDate, 
+                                            String filePath, String pin) {
+        try {
+            // Get all statement data including account details and transactions
+            Map<String, Object> statementData = getAccountStatementData(accountNo, startDate, endDate, pin);
+            
+            if (statementData.isEmpty() || !statementData.containsKey("transactions")) {
+                LOGGER.log(Level.WARNING, "No data available for account statement");
+                return false;
+            }
+            
+            // Use PDFGeneratorUtil to generate PDF
+            PDFGeneratorUtil pdfGenerator = new PDFGeneratorUtil();
+            return pdfGenerator.generateStatementPDF(statementData, filePath);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error generating account statement PDF: {0}", e.getMessage());
+            return false;
+        }
     }
     
     /**
@@ -383,6 +542,8 @@ public class TransactionHistoryService {
  * HIST-02: Verify filtering by date range, type and amount
  * HIST-03: Verify running balance calculation
  * HIST-04: Verify export to CSV/Excel
+ * STMT-01: Verify PDF statement generation with complete account details
+ * STMT-02: Verify PDF formatting and content
  * 
  * Agent run: OnlineBanking-Security-Implementation-1
  * End of generated code section

@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import java.text.SimpleDateFormat;
 import java.io.FileWriter;
 import java.io.File;
+import java.io.IOException;
 
 /* [AGENT GENERATED CODE - REQUIREMENT:User Story 4: Transaction History]
  * This class implements transaction history functionality with:
@@ -40,6 +41,23 @@ public class TransactionHistoryService {
         }
     }
     
+    /**
+     * Get transaction history for an account with optional filters
+     * 
+     * @param accountNo Account number
+     * @param startDate Start date (null for 6 months ago)
+     * @param endDate End date (null for today)
+     * @param type Transaction type (null for all)
+     * @param minAmount Minimum amount (0.0 for no minimum)
+     * @return List of Transaction objects
+     */
+    // [AGENT GENERATED CODE - REQUIREMENT:REQ-PDF-01]
+    // Updated method signature to support PDF statement generation
+    public List<Transaction> getTransactionHistory(String accountNo, Date startDate, Date endDate, 
+                                            String type, Double minAmount) {
+        return getTransactionHistory(accountNo, startDate, endDate, type, minAmount, null, null);
+    }
+
     /**
      * Get transaction history for an account with optional filters
      * 
@@ -256,11 +274,75 @@ public class TransactionHistoryService {
      * @param filePath Path to export file
      * @return true if successful, false otherwise
      */
+    // [AGENT GENERATED CODE - REQUIREMENT:REQ-PDF-02]
+    // Implemented PDF export by integrating with StatementPdfService
     public boolean exportToPDF(List<Transaction> transactions, String filePath) {
-        // In a real implementation, this would use a PDF library like iText or PDFBox
-        // For this example, we'll just indicate it's not implemented
-        LOGGER.log(Level.WARNING, "PDF export not implemented");
-        return false;
+        try {
+            // Get the account number from the first transaction
+            if (transactions.isEmpty()) {
+                LOGGER.log(Level.WARNING, "No transactions to export to PDF");
+                return false;
+            }
+            
+            String accountNo = transactions.get(0).getAccountNo();
+            
+            // Create a StatementPdfService instance
+            StatementPdfService pdfService = new StatementPdfService();
+            
+            // Determine date range from transactions
+            Date startDate = null;
+            Date endDate = null;
+            
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            for (Transaction transaction : transactions) {
+                try {
+                    Date transactionDate = dateFormat.parse(transaction.getDate());
+                    if (startDate == null || transactionDate.before(startDate)) {
+                        startDate = transactionDate;
+                    }
+                    if (endDate == null || transactionDate.after(endDate)) {
+                        endDate = transactionDate;
+                    }
+                } catch (Exception e) {
+                    LOGGER.log(Level.WARNING, "Error parsing transaction date: {0}", e.getMessage());
+                }
+            }
+            
+            // If dates couldn't be determined, use default values
+            if (startDate == null) {
+                startDate = new Date(System.currentTimeMillis() - (180 * 24 * 60 * 60 * 1000L)); // 180 days ago
+            }
+            if (endDate == null) {
+                endDate = new Date();
+            }
+            
+            // Generate PDF statement
+            StatementPdfService.EncryptedDownloadLink downloadLink = 
+                pdfService.generateStatement(accountNo, startDate, endDate);
+            
+            // Copy the generated PDF to the requested file path
+            if (downloadLink != null) {
+                File sourceFile = new File(pdfService.getPdfDirectory() + "/" + downloadLink.getFileName());
+                File destFile = new File(filePath);
+                
+                // Create necessary directories
+                if (!destFile.getParentFile().exists()) {
+                    destFile.getParentFile().mkdirs();
+                }
+                
+                // Copy file
+                java.nio.file.Files.copy(sourceFile.toPath(), destFile.toPath(), 
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                
+                return true;
+            }
+            
+            return false;
+            
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error exporting to PDF: {0}", e.getMessage());
+            return false;
+        }
     }
     
     /**
@@ -387,3 +469,10 @@ public class TransactionHistoryService {
  * Agent run: OnlineBanking-Security-Implementation-1
  * End of generated code section
  */
+
+// [AGENT GENERATED CODE - REQUIREMENT:REQ-PDF-01, REQ-PDF-02]
+// This file has been updated to integrate with StatementPdfService for PDF statement generation.
+// Changes include:
+// 1. New overloaded getTransactionHistory method to support PDF statements
+// 2. Implementation of the exportToPDF method to generate PDF statements with transaction data
+// Agent run identifier: AGENT-PDF-GEN-2025-12-02

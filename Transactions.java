@@ -7,17 +7,37 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
+/* [AGENT GENERATED CODE - REQUIREMENT:USER_STORY_TRANSACTIONS_SESSION_VALIDATION]
+ * Enhanced with session validation and logout functionality
+ * as identified in change_impact_analysis_review_final.md
+ */
 public class Transactions extends JFrame implements ActionListener
 {
   JLabel l1;
   JButton b1, b2, b3, b4, b5, b6, b7;
   String pin;
   String Accountno;
+  // [AGENT GENERATED CODE - REQUIREMENT:USER_STORY_TRANSACTIONS_SESSION_VALIDATION]
+  private LoginModel loginModel;
+  // [END AGENT GENERATED CODE]
   
   Transactions(String pin, String Accountno)
   {
     this.Accountno = Accountno;
-    this.pin= pin;  
+    this.pin= pin;
+    
+    // [AGENT GENERATED CODE - REQUIREMENT:USER_STORY_TRANSACTIONS_SESSION_VALIDATION]
+    // Initialize session validation
+    this.loginModel = new LoginModel();
+    
+    // Validate session before proceeding
+    if (!loginModel.isSessionValid()) {
+        JOptionPane.showMessageDialog(null, "Session expired. Please login again.");
+        setVisible(false);
+        new LoginPage().setVisible(true);
+        return;
+    }
+    // [END AGENT GENERATED CODE]  
     
     setLayout(null);
       
@@ -131,8 +151,10 @@ public class Transactions extends JFrame implements ActionListener
       new Deposit(this.pin,this.Accountno).setVisible(true);
       
     } else if (ae.getSource() == b2) {
+      // [AGENT GENERATED CODE - REQUIREMENT:WITHDRAWAL_PROCESSING_MODULE]
       setVisible(false);
-      new Withdrawl(this.pin,this.Accountno).setVisible(true);
+      new Withdrawal(this.pin,this.Accountno).setVisible(true);
+      // [END AGENT GENERATED CODE]
       
     } else if (ae.getSource() == b3) {
       setVisible(false);
@@ -151,7 +173,15 @@ public class Transactions extends JFrame implements ActionListener
       
     }else 
  if (ae.getSource() == b7) {
-      System.exit(0);
+      // [AGENT GENERATED CODE - REQUIREMENT:USER_STORY_20_LOGOUT_FUNCTIONALITY]
+      // Proper logout with session cleanup
+      if (loginModel != null) {
+          loginModel.logout();
+      }
+      JOptionPane.showMessageDialog(null, "Successfully logged out!");
+      setVisible(false);
+      new LoginPage().setVisible(true);
+      // [END AGENT GENERATED CODE]
     }
   }
   
@@ -160,3 +190,25 @@ public class Transactions extends JFrame implements ActionListener
     new Transactions("","");
   }
 }
+
+/*
+ * REQUIREMENT SUMMARY - AGENT GENERATED CODE
+ * Agent Run Identifier: CHANGE_IMPACT_ANALYSIS_IMPLEMENTATION_2026_02_03
+ * 
+ * Requirements Implemented:
+ * - USER_STORY_TRANSACTIONS_SESSION_VALIDATION: Session validation before transaction menu access
+ * - USER_STORY_20_LOGOUT_FUNCTIONALITY: Proper logout with session cleanup and redirection
+ * - WITHDRAWAL_PROCESSING_MODULE: Integration with new Withdrawal class for withdrawal transactions
+ * 
+ * Security Features Enhanced:
+ * - Session validation on transaction menu initialization
+ * - Automatic logout and redirect to login page on session expiry
+ * - Proper session cleanup on manual logout
+ * - User feedback for session status and logout confirmation
+ * 
+ * User Experience Improvements:
+ * - Clear session expiry messaging
+ * - Seamless navigation between login and transaction interfaces
+ * - Proper resource cleanup on logout
+ * - Integration with withdrawal functionality
+ */

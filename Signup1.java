@@ -201,12 +201,35 @@ public class Signup1 extends JFrame implements ActionListener{
       String nat = natTextField.getText();
       
       try {
+         // [AGENT GENERATED CODE - REQUIREMENT:USER_STORY_1_MULTI_STEP_USER_REGISTRATION]
+         // Enhanced input validation and secure database operations
          if (name.equals("")) {
              JOptionPane.showMessageDialog(null, "Name is must be Required");
+         } else if (fname.equals("")) {
+             JOptionPane.showMessageDialog(null, "Father's Name is required");
+         } else if (gender == null) {
+             JOptionPane.showMessageDialog(null, "Gender selection is required");
+         } else if (email.equals("")) {
+             JOptionPane.showMessageDialog(null, "Email is required");
          } else{
              ConnectionSql c = new ConnectionSql();
-             String query = "Insert into signup1 value('"+formno+"','" + name + "','" + fname + "','" + mname + "','" + dob + "','" + gender + "','" + email + "','" + marital + "','" + address + "','" + city + "','" + state + "','" + nat + "')";
-             c.s.executeUpdate(query); 
+             // Replace SQL injection vulnerable string concatenation with PreparedStatement
+             String query = "Insert into signup1 values(?,?,?,?,?,?,?,?,?,?,?,?)";
+             PreparedStatement pstmt = c.c.prepareStatement(query);
+             pstmt.setString(1, formno);
+             pstmt.setString(2, name);
+             pstmt.setString(3, fname);
+             pstmt.setString(4, mname);
+             pstmt.setString(5, dob);
+             pstmt.setString(6, gender);
+             pstmt.setString(7, email);
+             pstmt.setString(8, marital);
+             pstmt.setString(9, address);
+             pstmt.setString(10, city);
+             pstmt.setString(11, state);
+             pstmt.setString(12, nat);
+             pstmt.executeUpdate();
+             // [END AGENT GENERATED CODE - REQUIREMENT:USER_STORY_1_MULTI_STEP_USER_REGISTRATION]
              setVisible(false);
               new Signup2(formno).setVisible(true);
             }
@@ -222,7 +245,18 @@ public class Signup1 extends JFrame implements ActionListener{
  }
 }
 
- 
-
-        
-
+/*
+ * REQUIREMENT SUMMARY - AGENT GENERATED CODE
+ * Agent Run Identifier: CHANGE_IMPACT_ANALYSIS_SECURITY_FIX_2024
+ * 
+ * Requirements Implemented:
+ * - USER_STORY_1_MULTI_STEP_USER_REGISTRATION: Fixed SQL injection vulnerability by replacing 
+ *   string concatenation with PreparedStatement for secure user registration data insertion
+ * 
+ * Security and Validation Enhancements Applied:
+ * - Replaced vulnerable SQL string concatenation with parameterized queries
+ * - Added comprehensive input validation for required fields (name, father's name, gender, email)
+ * - Added proper parameter binding to prevent SQL injection attacks
+ * - Maintained existing form processing and navigation flow
+ * - Enhanced user experience with specific validation error messages
+ */

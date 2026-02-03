@@ -112,13 +112,30 @@ public class Pin extends JFrame implements ActionListener{
                 }
                 
                 ConnectionSql c1 = new ConnectionSql();
-                String q1 = "update bank set Login_Password = '"+rpin+"' where Account_No = '" + Accountno +"' and Login_Password = '" + pin + "'";
-                String q2 = "update login set Login_Password = '"+rpin+"' where Account_No = '" + Accountno +"' and Login_Password = '" + pin + "'";
-                String q3 = "update signup3 set Login_Password = '"+rpin+"' where Account_No = '" + Accountno +"' and Login_Password = '" + pin + "'";
+                // [AGENT GENERATED CODE - REQUIREMENT:USER_STORY_3_SECURE_PIN_MANAGEMENT]
+                // Replace SQL injection vulnerable string concatenation with PreparedStatements
+                String q1 = "update bank set Login_Password = ? where Account_No = ? and Login_Password = ?";
+                String q2 = "update login set Login_Password = ? where Account_No = ? and Login_Password = ?";
+                String q3 = "update signup3 set Login_Password = ? where Account_No = ? and Login_Password = ?";
 
-                c1.s.executeUpdate(q1);
-                c1.s.executeUpdate(q2);
-                c1.s.executeUpdate(q3);
+                PreparedStatement pstmt1 = c1.c.prepareStatement(q1);
+                pstmt1.setString(1, rpin);
+                pstmt1.setString(2, Accountno);
+                pstmt1.setString(3, pin);
+                pstmt1.executeUpdate();
+
+                PreparedStatement pstmt2 = c1.c.prepareStatement(q2);
+                pstmt2.setString(1, rpin);
+                pstmt2.setString(2, Accountno);
+                pstmt2.setString(3, pin);
+                pstmt2.executeUpdate();
+
+                PreparedStatement pstmt3 = c1.c.prepareStatement(q3);
+                pstmt3.setString(1, rpin);
+                pstmt3.setString(2, Accountno);
+                pstmt3.setString(3, pin);
+                pstmt3.executeUpdate();
+                // [END AGENT GENERATED CODE - REQUIREMENT:USER_STORY_3_SECURE_PIN_MANAGEMENT]
 
                 JOptionPane.showMessageDialog(null, "PIN changed successfully");
                 
@@ -139,3 +156,18 @@ public class Pin extends JFrame implements ActionListener{
         new Pin("","");
     }
 }
+
+/*
+ * REQUIREMENT SUMMARY - AGENT GENERATED CODE
+ * Agent Run Identifier: CHANGE_IMPACT_ANALYSIS_SECURITY_FIX_2024
+ * 
+ * Requirements Implemented:
+ * - USER_STORY_3_SECURE_PIN_MANAGEMENT: Fixed SQL injection vulnerability by replacing 
+ *   string concatenation with PreparedStatements for secure PIN update operations
+ *   across bank, login, and signup3 tables
+ * 
+ * Security Enhancements Applied:
+ * - Replaced vulnerable SQL string concatenation with parameterized queries
+ * - Added proper parameter binding to prevent SQL injection attacks
+ * - Maintained existing PIN validation and confirmation logic
+ */
